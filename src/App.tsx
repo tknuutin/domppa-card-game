@@ -1,97 +1,102 @@
 import React from 'react';
-// import logo from './logo.svg';
 import './App.css';
-import * as R from 'ramda'
+import * as Rx from 'rxjs'
+import { map } from 'rxjs/operators'
+import { DecisionPoint, iterateUntilDecision, executeChoice } from './game/game'
+import { isMultiselectDecision } from './game/game-util';
+import { GameUI } from './GameUI';
+import { initialiseGame, getInitialStep } from './game/game-init';
 
-import { State, Step, } from './game/game-types'
-import { initialiseGame, getInitialStep } from './game/game'
-import { isDecision } from './game/game-util';
-
-function execAct() {
-  let mockDecisions: string[] = [
-    'play action: village'
-  ]
-
-  console.log('starting execute')
-
-  const execStep = (s: State, step: Step, inputLog: string[] = []): [State, string[]] => {
-    let newState: State = s
-    let log: string[] = inputLog
-    if (isDecision(step)) {
-      const { player, execute, then } = step
-      const { parseDecision } = execute(s)
-
-      if (mockDecisions.length < 1) {
-        throw new Error('Ran out of decisions!')
-      }
-
-      const [first, ...rest] = mockDecisions
-      mockDecisions = rest;
-      // console.log('Decision: ', first)
-
-      R.forEach((line) => {
-        console.log(line)
-      }, log)
-      log = []
-      console.log('> ' + first);
-
-      const decisionResult = parseDecision(first, s)
-
-      if (!decisionResult) {
-        throw new Error('Oops could not parse decision! ' + first)
-      }
-
-      const decisionStep = decisionResult(s, log);
-
-      [newState, log] = execStep(s, decisionStep)
-    } else {
-      // console.log('acts?', s.turn.actions, log);
-      [newState, log] = step.stateChange(s, log)
-    }
-
-    if (step.then) {
-      // console.log('exec then', log)
-      return execStep(newState, step.then(newState, log), log)
-    }
-    // console.log('---New state: ', newState, '---')
-    return [newState, log]
-  }
-
-  // const village = findCard('Village', actions)
-  // const smithy = findCard('Smithy', actions)
-  // const copper = findCard('Copper', moneyCards)
-  // const estate = findCard('Estate', points)
-
-  // const s: State = 
-  const startState = initialiseGame('Player1', 'Computer')
-
-  // const erg = smithy.execAction!(s, [])
-  // debugger
-  const [initialStep, initialLog] = getInitialStep(startState)
-  const [state, log] = execStep(startState, initialStep, initialLog)
-  R.forEach(console.log, log)
-  console.log('final state')
-  console.log(state)
+type UIState = {
+  decisionPoint: DecisionPoint | undefined
+  oldLog: string[]
 }
 
-class Game extends React.Component<{}, any> {
-  componentDidMount() {
-    execAct()
+class App extends React.Component<{}, UIState> {
+  state: UIState  = {
+    decisionPoint: undefined,
+    oldLog: [],
   }
+
+  choiceSink: Rx.Subject<string>
+
+  constructor(props: {}) {
+    super(props)
+    this.choiceSink = new Rx.Subject()
+  }
+
+  componentDidMount() {
+    const initialState = initialiseGame('Player1', 'Computer')
+    const [initialStep, initialLog] = getInitialStep(initialState)
+    const firstDecisionPoint = iterateUntilDecision(initialState, initialStep, initialLog)
+    const firstDecision = firstDecisionPoint.decision
+    const log = firstDecisionPoint.log
+    const firstDecisionState = firstDecisionPoint.state
+
+    const initialStream = Rx.from([{
+      decision: firstDecision,
+      log,
+      state: firstDecisionState
+    }])
+
+    const decisionStream: Rx.Observable<DecisionPoint> = Rx.merge(
+      this.choiceSink.asObservable().pipe(
+        map(choice => executeChoice(choice, this.state.decisionPoint!))
+      ),
+      initialStream
+    )
+    
+    decisionStream.subscribe(({ decision, log, state }) => {
+      this.setState((uiState) => ({
+        decisionPoint: {
+          decision,
+          state,
+          log
+        },
+        oldLog: uiState.oldLog.concat(
+          uiState.decisionPoint
+            ? uiState.decisionPoint.log
+            : []
+        )
+      }))
+    })
+  }
+
+  onChoice = (choice: string) => {
+    const decision = this.state.decisionPoint!.decision
+    if (isMultiselectDecision(decision)) {
+      this.choiceSink.next(choice)
+    } else {
+      throw new Error('oops')
+    }
+  }
+
   render() {
+    const dp = this.state.decisionPoint
+    if (!dp) {
+      return (
+        <div className="App">
+          <h1>loading game</h1>
+        </div>
+      )
+    }
+
+    const { state, log, decision } = dp
+    const callbacks = {
+      onChoice: this.onChoice
+    }
     return (
-      <p>game here</p>
+      <div className="App">
+        <GameUI
+          state={state}
+          decision={decision}
+          oldLog={this.state.oldLog}
+          log={log}
+          callbacks={callbacks}
+        />
+      </div>
     )
   }
-}
-
-const App: React.FC = () => {
-  return (
-    <div className="App">
-      <p>Hello</p>
-      <Game/>
-    </div>
-  );
 }
 
 export default App;

@@ -2,6 +2,7 @@
 import { Card, CardType } from './game-types'
 import { pipeS } from './game-util'
 import { makeChange, pickCards, addActions } from './card-util'
+import { logF } from './debug';
 
 export const points: Card[] = [
   {
@@ -23,17 +24,7 @@ export const points: Card[] = [
     points: 6
   }
 ]
-const logF = (f: any, name: string) => {
-  if (name.indexOf('_') === 0) {
-    return f
-  }
-  return (...args: any[]) => {
-    console.log(`IN (${name}):`, ...args)
-    const ret = f(...args)
-    console.log(`OUT (${name}):`, ret)
-    return ret
-  }
-}
+
 export const moneyCards: Card[] = [
   {
     name: 'Copper',

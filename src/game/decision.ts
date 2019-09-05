@@ -1,34 +1,46 @@
 
-import { State, Stepper, Decision, PlayerId } from './game-types'
+import { State, Decision, PlayerId, MultiselectChoice, MultiselectDecision } from './game-types'
 import * as R from 'ramda'
+import { endTurn } from './turnend';
 
-type Choice = {
-  match: (command: string, state: State) => boolean
-  do: Stepper
-}
-type Matcher = (command: string, s: State) => Stepper | undefined
+export const decision = (
+  player: PlayerId,
+  choices: MultiselectChoice[],
+  description?: (state: State) => string[]
+): MultiselectDecision => ({
+  type: 'multiselect',
+  player,
+  choices,
+  description
+})
 
-export const oneOfOrUndefined = (...choices: Choice[]): Matcher =>
-  (command: string, state: State) => {
-    const match = R.find((choice) => choice.match(command, state), choices)
-    return match ? match.do : undefined
-  }
-
-export const mergeDecisions = (decisions: Decision[], player: PlayerId): Decision => {
-  return {
-    player,
-    execute: (state: State) => {
-      const decisionDefs = decisions.map((d) => d.execute(state))
-      const descriptions = decisionDefs.map(d => d.description)
-      return {
-        description: R.chain(R.identity, descriptions),
-        parseDecision: (command, s) => {
-          const parsed = decisionDefs.map((d) => {
-            return d.parseDecision(command, s)
-          }).find(R.identity)
-          return parsed
-        }
-      }
+export const endTurnDecision = (player: PlayerId): Decision => decision(
+  player,
+  [
+    {
+      description: 'End turn',
+      execute: () => endTurn('Player ended turn')
     }
+  ]
+)
+
+export const mergeDecisions = (
+  decisions: MultiselectDecision[],
+  description?: (state: State) => string[]
+): MultiselectDecision => {
+  if (decision.length < 1) {
+    throw new Error('No decisions given to mergedecisions')
   }
+  const last = R.last(decisions)!
+  const descr = description || last.description
+  const choices = decisions.reduce(
+    (choices: MultiselectChoice[], d) => choices.concat(d.choices),
+    []
+  )
+
+  return decision(
+    last.player,
+    choices,
+    descr
+  )
 }

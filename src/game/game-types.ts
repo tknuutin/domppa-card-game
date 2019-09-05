@@ -12,14 +12,25 @@ export type StateChange = {
   stateChange: (s: State, output: string[]) => [State, string[]]
   then?: Stepper
 }
-export type Decision = {
+type BaseDecision<T> = {
   player: PlayerId
-  execute: (s: State) => {
-    description: string[]
-    parseDecision: (decision: string, state: State) => Stepper | undefined
-  }
-  then?: Stepper
+  type: T
+  description?: (state: State) => string[]
 }
+
+export type MultiselectChoice = {
+  description: string
+  execute: (state: State, log: string[]) => Step
+}
+export type MultiselectDecision = BaseDecision<'multiselect'> & {
+  
+  choices: MultiselectChoice[]
+}
+export type InputDecision = BaseDecision<'input'> & {
+  description: (state: State) => string[]
+  parseDecision: (decision: string, state: State) => Step | undefined
+}
+export type Decision = InputDecision | MultiselectDecision
 
 type CustomMoneyAmountCounter = (state: State) => number
 

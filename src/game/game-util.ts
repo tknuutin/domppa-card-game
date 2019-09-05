@@ -1,23 +1,20 @@
 
 import * as R from 'ramda'
-import { Stepper, State, Decision, StateChange, PlayerState } from "./game-types";
+import { Stepper, State, Decision, StateChange, PlayerState, TurnState, BuyPhaseState, MultiselectDecision } from "./game-types";
 
 export const isDecision = (x: any): x is Decision => {
-  return x.showDescription !== undefined
+  return x.type === 'multiselect' || x.type === 'input'
 }
 export const isStateChange = (x: any): x is StateChange => {
   return x.stateChange !== undefined
 }
+export const isMultiselectDecision = (x: any): x is MultiselectDecision => {
+  return x.type === 'multiselect'
+}
 
-type TwoTupleF<A, B> = (a: A, b: B) => [A, B]
-const pipe2 = <A, B>(
-  ...funcs: TwoTupleF<A, B>[]
-): TwoTupleF<A, B> =>
-  (origA, origB) => R.reduce(
-    ([a, b], func) => func(a, b),
-    [origA, origB],
-    funcs
-  )
+export const isBuyPhase = (x: TurnState): x is BuyPhaseState => {
+  return x.phase === 'buy'
+}
 
 export const combineSteppers = (s1: Stepper, s2: Stepper): Stepper => {
   return (state, log) => {
