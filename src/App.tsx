@@ -47,18 +47,24 @@ class App extends React.Component<{}, UIState> {
     )
     
     decisionStream.subscribe(({ decision, log, state }) => {
-      this.setState((uiState) => ({
-        decisionPoint: {
-          decision,
-          state,
-          log
-        },
-        oldLog: uiState.oldLog.concat(
+      this.setState((uiState) => {
+        const oldLog = uiState.oldLog.concat(
           uiState.decisionPoint
             ? uiState.decisionPoint.log
             : []
         )
-      }))
+        const MAXLOG = 7
+        return {
+          decisionPoint: {
+            decision,
+            state,
+            log
+          },
+          oldLog: (oldLog.length > MAXLOG)
+            ? oldLog.slice(oldLog.length - MAXLOG, oldLog.length)
+            : oldLog
+        }
+      })
     })
   }
 

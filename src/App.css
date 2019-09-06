@@ -16,7 +16,10 @@
 }
 
 .game-board {
-  width: 50vw;
+  width: 100%;
+}
+.logs {
+  width: 50%;
 }
 
 .old-log {

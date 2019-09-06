@@ -29,7 +29,7 @@ const changeCurrentPlayer = (reason: string) =>
     const playerIndex = state.players.findIndex(
       (p) => p.id === player.id
     )
-    const nextPlayerIndex = playerIndex === state.players.length
+    const nextPlayerIndex = playerIndex === (state.players.length - 1)
       ? 0
       : playerIndex + 1
     const nextPlayer = state.players[nextPlayerIndex]
@@ -46,6 +46,7 @@ const changeCurrentPlayer = (reason: string) =>
           `Ending turn for ${player.name} (${reason}). ` +
           makePickUpMsg(nextPlayer.hand).join(' ')
         ),
+        '----- TURN END -----',
         'It is ' + nextPlayer.name + '´s turn.'
       ])
     ]
