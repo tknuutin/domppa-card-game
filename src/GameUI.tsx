@@ -1,6 +1,6 @@
 import React from 'react';
 import * as R from 'ramda'
-import { State, Decision, Card, CardType } from './game/game-types'
+import { State, Decision, Card, CardType, PlayerState } from './game/game-types'
 import { isMultiselectDecision, getCurrentPlayer, isBuyPhase } from './game/game-util';
 
 type UIDecisionProps = {
@@ -8,6 +8,16 @@ type UIDecisionProps = {
   decision: Decision
   onChoice: (choice: string) => void
 }
+
+const PlayerName: React.FC<{ player: PlayerState }> = ({ player }) => {
+  return (
+    <div className="player-name">
+      <p>{player.name}</p>
+      <div className="color-block" style={{ backgroundColor: getPlayerColor(player)}}></div>
+    </div>
+  )
+}
+
 const UIDecision: React.FC<UIDecisionProps> = ({ decision, onChoice, state }) => {
   if (!isMultiselectDecision(decision)) {
     return (
@@ -16,10 +26,10 @@ const UIDecision: React.FC<UIDecisionProps> = ({ decision, onChoice, state }) =>
       </div>
     )
   }
-  const playerName = getCurrentPlayer(state).name
+  const player = getCurrentPlayer(state)
   return (
     <div className="decision">
-      <p>{playerName}, make a decision:</p>
+      <PlayerName player={player}/><span>, make a decision:</span>
       {decision.choices.map((c, i) => {
         const select = () => onChoice((i + 1)  + '')
         return (
@@ -73,14 +83,24 @@ const cardsRow = (row: Card[]) => row.map((card, i) => (
 
 const pileRow = (pile: Card[][]) => cardsRow(pile.map((pile) => pile[0]))
 
+const getDeckCardsAmount = (player: PlayerState, state: State): string => {
+  if (state.debug) {
+    return player.deck.length + ' cards'
+  }
+
+  if (player.deck.length > 1) {
+    return '>1 cards'
+  }
+
+  return player.deck.length === 1
+    ? '1 card'
+    : 'empty'
+}
+
 const getCurrentTurnInfoText = (state: State): string => {
   const player = getCurrentPlayer(state)
   const discard = player.discard.length + ' cards'
-  const deck = player.deck.length > 1
-    ? '>1 cards'
-    : player.deck.length === 1
-      ? '1 card'
-      : 'empty'
+  const deck = getDeckCardsAmount(player, state)
   const turn = state.turn
   const { buys, money } = turn
   const actions = isBuyPhase(turn) ? '0' : turn.actions
@@ -91,6 +111,19 @@ const getCurrentTurnInfoText = (state: State): string => {
     ['Buys', buys],
     ['Money', money]
   ].map(([name, value]) => name + ': ' + value + '.').join(' ')
+}
+
+let COLOR_MAP: { [id: string]: string } = {}
+let colors = ['yellow', 'green', 'red', 'blue']
+const getPlayerColor = ({ id }: PlayerState) => {
+  if (COLOR_MAP[id] === undefined) {
+    const newColor = colors.pop()
+    if (!newColor) {
+      throw new Error('Ooops')
+    }
+    COLOR_MAP[id] = newColor
+  }
+  return COLOR_MAP[id]
 }
 
 const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
@@ -109,32 +142,39 @@ const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
     </div>
   )
 
-  const played = (
+  const turn = state.turn
+  const played = turn.played.length > 0 && (
     <div className="played">
       <p>Played:</p>
-      {cardsRow(state.turn.played)}
+      {isBuyPhase(turn) && (
+        cardsRow(turn.actionPhase.played) 
+      )}
+      {cardsRow(turn.played)}
     </div>
   )
 
   const hand = player.hand
+  const areaColor = getPlayerColor(player)
 
   return (
     <div className="game-board">
       {store}
-      <p>{player.name}'s turn.</p>
-      {played}
-      <div className="hand">
-        {hand.length > 0 ? (
-          <>
-            <p>Hand:</p>
-            {cardsRow(player.hand)}
-          </>
-        ) : (
-          <p>Hand is empty.</p>
-        )}
+      <div className="player-area" style={{ borderColor: areaColor }}>
+        <PlayerName player={player}/><span>'s turn.</span>
+        {played}
+        <div className="hand">
+          {hand.length > 0 ? (
+            <>
+              <p>Hand:</p>
+              {cardsRow(player.hand)}
+            </>
+          ) : (
+            <p>Hand is empty.</p>
+          )}
+        </div>
+        <p>{getCurrentTurnInfoText(state)}</p>
+        {children}
       </div>
-      <p>{getCurrentTurnInfoText(state)}</p>
-      {children}
     </div>
   )
 }
