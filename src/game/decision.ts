@@ -1,5 +1,5 @@
 
-import { State, Decision, PlayerId, MultiselectChoice, MultiselectDecision } from './game-types'
+import { State, PlayerId, MultiselectChoice, MultiselectDecision } from './game-types'
 import * as R from 'ramda'
 import { endTurn } from './turnend';
 
@@ -14,7 +14,7 @@ export const decision = (
   description
 })
 
-export const endTurnDecision = (player: PlayerId): Decision => decision(
+export const endTurnDecision = (player: PlayerId): MultiselectDecision => decision(
   player,
   [
     {

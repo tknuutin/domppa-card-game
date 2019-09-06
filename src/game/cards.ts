@@ -1,8 +1,6 @@
 
 import { Card, CardType } from './game-types'
-import { pipeS } from './game-util'
-import { makeChange, pickCards, addActions } from './card-util'
-import { logF } from './debug';
+import { makeChange, pickCards, addActions, pipeChanges } from './card-util'
 
 export const points: Card[] = [
   {
@@ -50,15 +48,15 @@ export const actions: Card[] = [
     name: 'Village',
     types: [CardType.ACTION],
     price: 3,
-    execAction: logF(pipeS(
-      makeChange(pickCards(1)),
-      makeChange(addActions(2))
-    ), '_village')
+    execAction: pipeChanges(
+      pickCards(1),
+      addActions(2)
+    )
   },
   {
     name: 'Smithy',
     types: [CardType.ACTION],
     price: 3,
-    execAction: logF(makeChange(pickCards(3)), '_smithy')
+    execAction: makeChange(pickCards(3))
   }
 ]

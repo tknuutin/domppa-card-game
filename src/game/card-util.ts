@@ -11,6 +11,7 @@ import {
 } from './game-types'
 import { modifyTurn, modifyCurrentPlayer, Mod, modifyActions } from './modifiers';
 import { CurriedF3, shuffle, pipe2 } from './util';
+import { pipeS } from './game-util';
 
 export const findCard = (name: string, cards: Card[]): Card => {
   const match = R.find((card) => card.name === name, cards)
@@ -99,11 +100,15 @@ export const playMoneyCard = (card: Card) => pipe2(
   executePlayMoneyCard(card)
 )
 
-export const makeChange = (f: Mod<State>) => (s: State): StateChange => {
+export const makeChange = (f: Mod<State>) => (): StateChange => {
   return {
     stateChange: f
   }
 }
+
+export const pipeChanges = (...fs: Mod<State>[]) => pipeS(
+  ...fs.map(makeChange)
+)
 
 export const take = (amount: number, arr: Card[]) => {
   if (amount > arr.length) {

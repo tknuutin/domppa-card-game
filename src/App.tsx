@@ -53,6 +53,11 @@ class App extends React.Component<{}, UIState> {
             ? uiState.decisionPoint.log
             : []
         )
+
+        if (state.debug) {
+          (window as any).domppadebug = state
+        }
+
         const MAXLOG = 7
         return {
           decisionPoint: {
