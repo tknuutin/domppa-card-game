@@ -3,6 +3,7 @@ export enum CardType {
   ACTION,
   MONEY,
   POINT,
+  ATTACK,
   CURSE,
   RUINS,
   SHELTER

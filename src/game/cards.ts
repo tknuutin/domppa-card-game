@@ -1,6 +1,18 @@
 
-import { Card, CardType } from './game-types'
-import { makeChange, pickCards, addActions, pipeChanges } from './card-util'
+import * as R from 'ramda'
+import { Card, CardType, PlayerState, PlayerId, State } from './game-types'
+import { makeChange, pickCards, addActions, pipeChanges, findCard } from './card-util'
+import { getCurrentPlayer, pipeS } from './game-util';
+import { modifyPlayer } from './modifiers';
+
+export const special: Card[] = [
+  {
+    name: 'Curse',
+    types: [CardType.CURSE],
+    price: 0,
+    points: -1
+  }
+]
 
 export const points: Card[] = [
   {
@@ -58,5 +70,33 @@ export const actions: Card[] = [
     types: [CardType.ACTION],
     price: 3,
     execAction: makeChange(pickCards(3))
+  },
+  {
+    name: 'Witch',
+    types: [CardType.ACTION, CardType.ATTACK],
+    price: 5,
+    execAction: pipeChanges(
+      pickCards(2),
+      (state, log) => {
+        const me = getCurrentPlayer(state)
+        const curse = findCard('Curse', special)
+
+        return R.reduce(
+          ([state, log], mod) => mod(state, log),
+          [state, log],
+          state.players
+            .filter((p) => p.id !== me.id)
+            .map((player) => {
+              const modifyTarget = modifyPlayer((p) => p.id === player.id)
+              return modifyTarget((player, log) => {
+                return [{
+                  ...player,
+                  discard: player.discard.concat([curse])
+                }, log.concat([player.name + ' gains a curse.'])]
+              })
+            })
+        )
+      }
+    )
   }
 ]

@@ -66,6 +66,7 @@ const cardTypeToCss = {
   [CardType.ACTION]: 'action',
   [CardType.MONEY]: 'money',
   [CardType.POINT]: 'point',
+  [CardType.ATTACK]: 'attack',
   [CardType.CURSE]: 'curse',
   [CardType.RUINS]: 'ruins',
   [CardType.SHELTER]: 'shelter'

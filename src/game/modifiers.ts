@@ -1,7 +1,7 @@
 
 import * as R from 'ramda'
 import { TurnState, State, PlayerState } from "./game-types";
-import { isBuyPhase } from "./game-util";
+import { isBuyPhase, getCurrentPlayer } from "./game-util";
 
 export type Mod<T> = (x: T, output: string[]) => [T, string[]]
 
@@ -43,17 +43,20 @@ export const modifyActions = (mod: Mod<number>) => modifyTurn((t, log) => {
   return [turn, output]
 })
 
-export const modifyCurrentPlayer = (mod: Mod<PlayerState>): Mod<State> => (state, log) => {
-  const currentPlayer = state.turn.player
-  const index = R.findIndex(({
-    id
-  }) => id === currentPlayer, state.players)
-  const [players, output] = modifyIndex(mod, index, state.players, log)
-  return [
-    {
-      ...state,
-      players: players
-    },
-    output
-  ]
-}
+export const modifyPlayer = (matcher: (player: PlayerState, state: State) => boolean) =>
+  (mod: Mod<PlayerState>): Mod<State> => (state, log) => {
+    const index = R.findIndex((player) => matcher(player, state), state.players)
+    const [players, output] = modifyIndex(mod, index, state.players, log)
+    return [
+      {
+        ...state,
+        players: players
+      },
+      output
+    ]
+  }
+
+export const modifyCurrentPlayer = modifyPlayer((player, state) => {
+  const currentPlayer = getCurrentPlayer(state)
+  return player.id === currentPlayer.id
+})

@@ -18,7 +18,7 @@ function initialiseDeck(): Card[] {
   )
 
   // debug code here
-  // initDeck[0] = findCard('Village', actions)
+  initDeck[0] = findCard('Witch', actions)
   // initDeck[1] = findCard('Smithy', actions)
   // initDeck[7] = findCard('Smithy', actions)
 
