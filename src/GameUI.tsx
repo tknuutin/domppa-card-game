@@ -156,11 +156,13 @@ const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
   const hand = player.hand
   const areaColor = getPlayerColor(player)
 
+  const phase = isBuyPhase(state.turn) ? ' Buy phase.' : ''
+
   return (
     <div className="game-board">
       {store}
       <div className="player-area" style={{ borderColor: areaColor }}>
-        <PlayerName player={player}/><span>'s turn.</span>
+        <PlayerName player={player}/><span>'s turn.{phase}</span>
         {played}
         <div className="hand">
           {hand.length > 0 ? (
