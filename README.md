@@ -1,4 +1,4 @@
-# dominion-test
+# domppa-card-game
 Experimenting with an FP-ish implementation of the card game Domppa, that also has another name.
 
 The game consists of 2-5 players that during each game build a new deck of cards consisiting of actions, money, and points. The game board, meaning which cards are available to play, are randomised for each game as well.
