@@ -3,7 +3,7 @@ import * as R from 'ramda'
 import { State, Step, BuyPhaseState, Card, CardType, MultiselectDecision } from "./game-types";
 import { getCurrentPlayer, isBuyPhase } from "./game-util";
 import { addCardToDiscard, reduceBuys, reduceMoney, ofType, playMoneyCard, uniqueCards } from './card-util';
-import { decision, mergeDecisions } from './decision';
+import { decision, mergeDecisions, endTurnDecision } from './decision';
 import { endTurn } from './turnend';
 import { pipe2 } from './util';
 
@@ -184,5 +184,9 @@ export const buyPhase = (state: State): Step => {
     })
   )
   
-  return mergeDecisions([purchaseDecision, playMoneyCardsDecision])
+  return mergeDecisions([
+    purchaseDecision,
+    playMoneyCardsDecision,
+    endTurnDecision(currentPlayer.id)
+  ])
 }
