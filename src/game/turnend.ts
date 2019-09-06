@@ -33,21 +33,24 @@ const changeCurrentPlayer = (reason: string) =>
       ? 0
       : playerIndex + 1
     const nextPlayer = state.players[nextPlayerIndex]
+    const newState = {
+      ...state,
+      turn: {
+        ...state.turn,
+        player: nextPlayer.id
+      }
+    }
+
     return [
-      {
-        ...state,
-        turn: {
-          ...state.turn,
-          player: nextPlayer.id
-        }
-      },
+      newState,
       log.concat([
         (
-          `Ending turn for ${player.name} (${reason}). ` +
-          makePickUpMsg(nextPlayer.hand).join(' ')
+          `Ending turn for ${player.name} (${reason}) ` +
+          makePickUpMsg(player.hand).join(' ')
         ),
         '----- TURN END -----',
-        'It is ' + nextPlayer.name + '´s turn.'
+        'It is ' + nextPlayer.name + '´s turn. Hand: '
+          + nextPlayer.hand.map((c => c.name)).join(', ')
       ])
     ]
   }

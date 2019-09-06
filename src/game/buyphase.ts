@@ -2,11 +2,10 @@
 import * as R from 'ramda'
 import { State, Step, BuyPhaseState, Card, CardType, MultiselectDecision } from "./game-types";
 import { getCurrentPlayer, isBuyPhase } from "./game-util";
-import { addCardToDiscard, reduceBuys, reduceMoney, ofType, playCard, uniqueCards } from './card-util';
+import { addCardToDiscard, reduceBuys, reduceMoney, ofType, playMoneyCard, uniqueCards } from './card-util';
 import { decision, mergeDecisions } from './decision';
 import { endTurn } from './turnend';
 import { pipe2 } from './util';
-import { logF } from './debug';
 
 export const getCardPrice = (turn: BuyPhaseState, card: Card, state: State): number => {
   const { discounts } = turn
@@ -30,7 +29,6 @@ export const getCardPrice = (turn: BuyPhaseState, card: Card, state: State): num
 const canAfford = (turn: BuyPhaseState, card: Card, state: State) => {
   const { money } = turn
   const cardPrice = getCardPrice(turn, card, state)
-  // console.log('can afford?', card.name, cardPrice, money)
   return cardPrice <= money
 }
 
@@ -116,7 +114,7 @@ const autoplayMoneyCards = (state: State, log: string[]): [State, string[]] => {
   
   const { hand } = currentPlayer
   const cardsToPlay = getMoneyCards(hand)
-  const transforms = cardsToPlay.map(playCard)
+  const transforms = cardsToPlay.map(playMoneyCard)
   const cardNames = cardsToPlay.map(card => card.name.toUpperCase()).join(', ')
   const [newState, newLog] = R.reduce(
     ([state, log], transform) => {
@@ -180,7 +178,7 @@ export const buyPhase = (state: State): Step => {
       return {
         description: 'Play ' + card.name,
         execute: () => ({
-          stateChange: playCard(card)
+          stateChange: playMoneyCard(card)
         })
       }
     })

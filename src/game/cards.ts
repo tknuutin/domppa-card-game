@@ -59,6 +59,6 @@ export const actions: Card[] = [
     name: 'Smithy',
     types: [CardType.ACTION],
     price: 3,
-    execAction: makeChange(pickCards(3))
+    execAction: logF(makeChange(pickCards(3)), '_smithy')
   }
 ]

@@ -1,4 +1,4 @@
-import { findMultiple, take } from "./card-util";
+import { findMultiple, take, findCard } from "./card-util";
 import { points, moneyCards, actions } from "./cards";
 import { Card, State, PlayerState, PlayerId, TurnState, Step } from "./game-types";
 import { shuffle } from "./util";
@@ -11,11 +11,16 @@ const findEstate = findPoints('Estate')
 const findCopper = findMoney('Copper')
 
 function initialiseDeck(): Card[] {
-  return shuffle(
+  let initDeck = shuffle(
     findEstate(3).concat(
       findCopper(7)
     )
   )
+
+  // debug code here
+  // initDeck[0] = findCard('Smithy', actions)
+
+  return initDeck
 }
 
 export const getInitialStep = (state: State): [Step, string[]] => {
@@ -39,6 +44,8 @@ export function initialiseTurn(player: PlayerId): TurnState {
   }
 }
 
+const DEBUG_ON = true
+
 export function initialiseGame(...playerNames: string[]): State {
   const players = playerNames.map((playerName, i): PlayerState => {
     const fullDeck = initialiseDeck()
@@ -52,6 +59,7 @@ export function initialiseGame(...playerNames: string[]): State {
     }
   })
   return {
+    debug: DEBUG_ON,
     turns: 0,
     turn: initialiseTurn(0),
     players,

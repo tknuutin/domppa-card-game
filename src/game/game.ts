@@ -5,7 +5,7 @@ import { getCurrentPlayer, isMultiselectDecision, isDecision } from './game-util
 import { decision } from './decision';
 import { buyPhase } from './buyphase';
 import { logF } from './debug';
-import { ofType, uniqueCards } from './card-util';
+import { ofType, uniqueCards, playActionCard } from './card-util';
 
 const moveToBuyPhase = (reason?: string): StateChange => {
   return {
@@ -66,7 +66,7 @@ const actionPhase = (state: State): Step => {
   const choices: MultiselectChoice[] = uniqueActionsInHand.map((card) => {
     return {
       description: 'Play action: ' + card.name,
-      execute: card.execAction!
+      execute: playActionCard(card)
     }
   })
 
@@ -135,13 +135,10 @@ export const executeChoice = logF((choice: string, dp: DecisionPoint): DecisionP
 
   const selectedChoice = decision.choices[selection]
   const stepAfterDecision = selectedChoice.execute(dp.state, [])
-  if (isDecision(stepAfterDecision)) {
-    return { state: dp.state, decision: stepAfterDecision, log: [] }
-  }
+  // if (isDecision(stepAfterDecision)) {
+  //   return { state: dp.state, decision: stepAfterDecision, log: [] }
+  // }
 
-  const stateAtChoice = dp.state
-  const [newState, newLog] = stepAfterDecision.stateChange(stateAtChoice, [])
-  const step = getTurnNextStep(newState)
-  return iterateUntilDecision(stateAtChoice, step, newLog)
+  return iterateUntilDecision(dp.state, stepAfterDecision, [])
 }, '_exechoice')
 

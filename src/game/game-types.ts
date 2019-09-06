@@ -107,6 +107,7 @@ export type StoreState = {
   other?: Card[][]
 }
 export type State = {
+  debug: boolean
   turns: number
   turn: TurnState
   players: PlayerState[]

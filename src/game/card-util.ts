@@ -7,6 +7,7 @@ import {
   BuyPhaseState,
   ActionPhaseState,
   StateChange,
+  Step,
 } from './game-types'
 import { modifyTurn, modifyCurrentPlayer, Mod, modifyActions } from './modifiers';
 import { CurriedF3, shuffle, pipe2 } from './util';
@@ -31,9 +32,8 @@ export const findMultiple: CurriedF3<Card[], string, number, Card[]> = R.curryN(
   }
 )
 
-const playActionCard = (card: Card) => modifyTurn((turn, log) => {
+const reduceActions = modifyTurn((turn, log) => {
   const actionPhaseTurn = turn as ActionPhaseState
-  console.warn('need implementation for actually playing card')
   return [
     {
       ...actionPhaseTurn,
@@ -43,7 +43,24 @@ const playActionCard = (card: Card) => modifyTurn((turn, log) => {
   ]
 })
 
-const playMoneyCard = (card: Card) => (state: State, log: string[]): [State, string[]] => {
+export const playActionCard = (card: Card) => {
+  const stateChangePipe = pipe2(
+    moveCardFromHandToPlayed(card),
+    reduceActions,
+    (state, log) => [state, log.concat([
+      `You play an action card: ${card.name}.`
+    ])]
+  )
+
+  return (): Step => {
+    return {
+      stateChange: stateChangePipe,
+      then: card.execAction!
+    }
+  }
+}
+
+const executePlayMoneyCard = (card: Card) => (state: State, log: string[]): [State, string[]] => {
   const turn = state.turn as BuyPhaseState
   const moneyValue = typeof card.moneyValue === 'function'
     ? card.moneyValue(state)
@@ -57,14 +74,16 @@ const playMoneyCard = (card: Card) => (state: State, log: string[]): [State, str
   }, log]
 }
 
-export const playCard = (card: Card) => pipe2(
+const moveCardFromHandToPlayed = (card: Card) => pipe2(
   modifyCurrentPlayer((playerState, log) => {
     const index = R.findIndex(
       (handCard) => handCard.name === card.name, playerState.hand
     )
+    
+    const handWithout = R.remove(index, 1, playerState.hand)
     return [{
       ...playerState,
-      hand: R.remove(index, 1, playerState.hand)
+      hand: handWithout
     }, log]
   }),
   modifyTurn((turn, log) => {
@@ -72,10 +91,12 @@ export const playCard = (card: Card) => pipe2(
       ...turn,
       played: turn.played.concat([card])
     }, log]
-  }),
-  isAction(card)
-    ? playActionCard(card)
-    : playMoneyCard(card)
+  })
+)
+
+export const playMoneyCard = (card: Card) => pipe2(
+  moveCardFromHandToPlayed(card),
+  executePlayMoneyCard(card)
 )
 
 export const makeChange = (f: Mod<State>) => (s: State): StateChange => {
@@ -160,11 +181,12 @@ export const pickCards = (amount: number, silent: boolean = false) =>
     }
 
     const prePickup = state.deck
-    const [newState, newLog] = shuffleDiscardIntoDeck(state, log)
+
+    const [newState, newLog] = shuffleDiscardIntoDeck(state, log)    
     const { deck } = newState
     const remainingToPickup = amount - prePickup.length
+    
     const amountAfterShuffle = Math.min(deck.length, remainingToPickup)
-
     const [taken, rest] = take(amountAfterShuffle, deck)
     const allPickedUp = prePickup.concat(taken)
 
@@ -173,7 +195,7 @@ export const pickCards = (amount: number, silent: boolean = false) =>
       ? [`You do not have enough cards in your deck to pick up ${amount} cards.`].concat(pickedUpMsg)
       : pickedUpMsg
     return [
-      addToHand(taken, rest, newState),
+      addToHand(allPickedUp, rest, newState),
       newLog.concat(msg)
     ]
   })
