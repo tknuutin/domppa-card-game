@@ -62,10 +62,11 @@ const ScreenLog: React.FC<{ log: string[], cls?: string }> = ({ log, cls }) => (
 )
 
 const css = (...classes: (string | undefined)[]) => classes.filter(R.identity).join(' ')
-const cardTypeToCss = {
+const cardTypeToCss: { [T in CardType]: string} = {
   [CardType.ACTION]: 'action',
   [CardType.MONEY]: 'money',
   [CardType.POINT]: 'point',
+  [CardType.REACTION]: 'reaction',
   [CardType.ATTACK]: 'attack',
   [CardType.CURSE]: 'curse',
   [CardType.RUINS]: 'ruins',

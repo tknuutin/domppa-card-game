@@ -1,6 +1,6 @@
 
 import * as R from 'ramda'
-import { Stepper, State, Decision, StateChange, PlayerState, TurnState, BuyPhaseState, MultiselectDecision } from "./game-types";
+import { Stepper, State, Decision, StateChange, PlayerState, TurnState, BuyPhaseState, MultiselectDecision, Step } from "./game-types";
 
 export const isDecision = (x: any): x is Decision => {
   return x.type === 'multiselect' || x.type === 'input'
@@ -23,6 +23,20 @@ export const combineSteppers = (s1: Stepper, s2: Stepper): Stepper => {
       then: s2
     }
   }
+}
+
+export const combineSteps = (...steps: Step[]): Step => {
+  const [last, ...rest] = R.reverse(steps)
+  return R.reduce(
+    (chain, effect) => {
+      return {
+        ...chain,
+        then: () => effect
+      }
+    },
+    last,
+    rest
+  )
 }
 
 export type PipeS = (...f: Stepper[]) => Stepper

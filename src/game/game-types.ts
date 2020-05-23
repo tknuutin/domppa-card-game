@@ -1,19 +1,40 @@
+import { Mod } from "./modifiers";
+
 export type PlayerId = number
 export enum CardType {
   ACTION,
   MONEY,
   POINT,
   ATTACK,
+  REACTION,
   CURSE,
   RUINS,
   SHELTER
 }
 
-export type StateChange = {
-  stateChange: (s: State, output: string[]) => [State, string[]]
+export type ReactTo = 'enemy-attack'
+
+type BaseStep = {
   then?: Stepper
 }
-type BaseDecision<T> = {
+
+type SCMetadataBase<T> = {
+  type: T
+}
+type EnemyAttackMetaData = SCMetadataBase<'enemy-attack'> & {
+  attacker: PlayerId
+  target: PlayerId
+  attackingCard?: string
+}
+
+// union type
+export type StateChangeMetaData = EnemyAttackMetaData
+
+export type StateChange = BaseStep & {
+  metaData?: StateChangeMetaData[]
+  stateChange: (s: State, output: string[]) => [State, string[]]
+}
+type BaseDecision<T> = BaseStep & {
   player: PlayerId
   type: T
   description?: (state: State) => string[]
@@ -37,6 +58,7 @@ type CustomMoneyAmountCounter = (state: State) => number
 
 export type Step = StateChange | Decision
 export type Stepper = (s: State, log: string[]) => Step
+
 export type Card = {
   name: string
   description?: string
@@ -44,6 +66,12 @@ export type Card = {
   price: number | CustomMoneyAmountCounter
   moneyValue?: number | CustomMoneyAmountCounter
   points?: number
+  
+  reaction?: {
+    match: (metadata: StateChangeMetaData) => boolean
+    modifyStateChange: (s: StateChange) => Step
+  }
+
   execAction?: (state: State, log: string[]) => Step
   execBuyAction?: (state: State, log: string[]) => Step
 }
