@@ -23,6 +23,7 @@ export const findCard = (name: string, cards: Card[]): Card => {
 
 export const ofType = (t: CardType) => (card: Card) => card.types.includes(t)
 export const isAction = ofType(CardType.ACTION)
+export const isReaction = ofType(CardType.REACTION)
 export const isMoney = ofType(CardType.MONEY)
 
 

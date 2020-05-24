@@ -21,14 +21,16 @@ type BaseStep = {
 type SCMetadataBase<T> = {
   type: T
 }
-type EnemyAttackMetaData = SCMetadataBase<'enemy-attack'> & {
+export type EnemyAttackMetaData = SCMetadataBase<'enemy-attack'> & {
   attacker: PlayerId
   target: PlayerId
   attackingCard?: string
 }
 
 // union type
-export type StateChangeMetaData = EnemyAttackMetaData
+export type StateChangeMetaData =
+  | EnemyAttackMetaData
+  | SCMetadataBase<'handled'>
 
 export type StateChange = BaseStep & {
   metaData?: StateChangeMetaData[]
@@ -59,6 +61,22 @@ type CustomMoneyAmountCounter = (state: State) => number
 export type Step = StateChange | Decision
 export type Stepper = (s: State, log: string[]) => Step
 
+export type CardReactionProperties = {
+  match: (
+    metadata: StateChangeMetaData[],
+    location: PlayerId,
+    state: State
+  ) => StateChangeMetaData[] | undefined
+
+  getReactionStep: (
+    sc: StateChange,
+    matchingMetadata: StateChangeMetaData[],
+    location: PlayerId,
+    state: State,
+    log: string[]
+  ) => Step
+}
+
 export type Card = {
   name: string
   description?: string
@@ -67,10 +85,7 @@ export type Card = {
   moneyValue?: number | CustomMoneyAmountCounter
   points?: number
   
-  reaction?: {
-    match: (metadata: StateChangeMetaData) => boolean
-    modifyStateChange: (s: StateChange) => Step
-  }
+  reaction?: CardReactionProperties
 
   execAction?: (state: State, log: string[]) => Step
   execBuyAction?: (state: State, log: string[]) => Step

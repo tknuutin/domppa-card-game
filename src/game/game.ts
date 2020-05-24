@@ -1,11 +1,12 @@
 
 import * as R from 'ramda'
 import { StateChange, State, Step, CardType, MultiselectChoice, Decision } from './game-types'
-import { getCurrentPlayer, isMultiselectDecision, isDecision } from './game-util';
+import { getCurrentPlayer, isMultiselectDecision, isDecision, isStateChange, combineSteps } from './game-util';
 import { decision } from './decision';
 import { buyPhase } from './buyphase';
 import { logF } from './debug';
-import { ofType, uniqueCards, playActionCard } from './card-util';
+import { ofType, uniqueCards, playActionCard, isReaction } from './card-util';
+import { getMatchingReactions, getReactionExecutionSteps } from './reaction';
 
 const moveToBuyPhase = (reason?: string): StateChange => {
   return {
@@ -109,6 +110,27 @@ export const iterateUntilDecision = logF((
     throw new Error('Max state changes before decision')
   }
 
+  if (isStateChange(step)) {
+    const { metaData } = step
+    if (metaData) {
+      
+      const reactionsPerPlayer = getMatchingReactions(state, metaData)
+      if (reactionsPerPlayer.length > 0) {
+        const reactionSteps = getReactionExecutionSteps(
+          reactionsPerPlayer,
+          step,
+          state,
+          log
+        )
+        const allSteps = combineSteps(
+          ...reactionSteps
+        )
+        return iterateUntilDecision(state, allSteps, log, loopGuard + 1)
+      }
+      
+    }
+  }
+
   if (isDecision(step)) {
     return {
       decision: step,
@@ -135,9 +157,6 @@ export const executeChoice = logF((choice: string, dp: DecisionPoint): DecisionP
 
   const selectedChoice = decision.choices[selection]
   const stepAfterDecision = selectedChoice.execute(dp.state, [])
-  // if (isDecision(stepAfterDecision)) {
-  //   return { state: dp.state, decision: stepAfterDecision, log: [] }
-  // }
 
   return iterateUntilDecision(dp.state, stepAfterDecision, [])
 }, '_exechoice')
