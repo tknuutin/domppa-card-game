@@ -97,6 +97,7 @@ export type PlayerState = {
   deck: Card[]
   discard: Card[]
   hand: Card[]
+  turns: number
 }
 
 export type TurnPhase = 'action' | 'buy'

@@ -18,8 +18,8 @@ function initialiseDeck(): Card[] {
   )
 
   // debug code here
-  initDeck[0] = findCard('Witch', actions)
-  initDeck[1] = findCard('Moat', actions)
+  // initDeck[0] = findCard('Witch', actions)
+  // initDeck[1] = findCard('Moat', actions)
   // initDeck[1] = findCard('Smithy', actions)
   // initDeck[7] = findCard('Smithy', actions)
 
@@ -58,7 +58,8 @@ export function initialiseGame(...playerNames: string[]): State {
       id: i,
       deck,
       discard: [],
-      hand
+      hand,
+      turns: 0
     }
   })
   return {

@@ -16,6 +16,7 @@ const cleanUpPlayerAtEndOfTurn = (state: State, log: string[]) => pipe2(
 
     return [{
       ...player,
+      turns: player.turns + 1,
       hand: [],
       discard: player.discard.concat(used)
     }, log]
