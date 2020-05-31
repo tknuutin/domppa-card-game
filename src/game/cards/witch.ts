@@ -1,5 +1,15 @@
-import { CardTemplate, CardType, PlayerState, StateChange, StateChangeF } from "../game-types"
-import { combineSteppers, getCurrentPlayer, combineSteps, makeChange } from "../game-util"
+import {
+  CardType,
+  PlayerState,
+  StateChange,
+  StateChangeF
+} from "../game-types"
+import {
+  combineSteppers,
+  getCurrentPlayer,
+  combineSteps,
+  makeChange
+} from "../game-util"
 import { modifyPlayer } from "../modifiers"
 import { CardFactory } from "../cards"
 

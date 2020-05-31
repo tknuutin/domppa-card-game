@@ -20,14 +20,22 @@ export const Moat: CardFactory = ({ pickCards }) => ({
     match: (metadata, me) => metadata.filter(
       (m) => isEnemyAttack(m) && m.target === me
     ),
-    getReactionStep: (originalStateChange, metadataArr, myId, state): Decision => {
+    getReactionStep: (
+      originalStateChange,
+      metadataArr,
+      myId,
+      state
+    ): Decision => {
+
       const me = state.players.find(({ id }) => id === myId)!
       const metadata = metadataArr[0] as EnemyAttackMetaData
       const attackingCard = metadata.attackingCard || 'UNKNOWN ATTACK'
-      // console.log('hello here', me.name)
+
       return {
         type: 'multiselect',
-        description: () => [`${me.name}, reveal Moat to stop attack (${attackingCard})?`],
+        description: () => [
+          `${me.name}, reveal Moat to stop attack (${attackingCard})?`
+        ],
         player: me.id,
         choices: [
           {
@@ -35,7 +43,9 @@ export const Moat: CardFactory = ({ pickCards }) => ({
             execute: () => ({
               stateChange: (state, log) => [
               state,
-              log.concat([`${me.name} revealed Moat and ${attackingCard} had no effect.`])
+              log.concat([
+                `${me.name} revealed Moat and ${attackingCard} had no effect.`
+              ])
             ]})
           },
           {

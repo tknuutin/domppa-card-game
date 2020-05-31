@@ -1,13 +1,27 @@
 
 
 import { uniqBy, splitAt, findIndex, remove } from 'ramda'
-import { CardTemplate, CardType, Card, ActionPhaseState, Step, State, BuyPhaseState, PlayerState } from './game-types'
+import {
+  CardTemplate,
+  CardType,
+  Card,
+  ActionPhaseState,
+  Step,
+  State,
+  BuyPhaseState,
+  PlayerState
+} from './game-types'
 import { Witch } from './cards/witch';
 import { Moat } from './cards/moat';
 import { special } from './cards/special';
 import { modifyTurn, modifyCurrentPlayer } from './modifiers';
 import { pipe2 } from './util';
-import { pipeChanges, addActions, shuffleDiscardIntoDeck, makeChange } from './game-util';
+import {
+  pipeChanges,
+  addActions,
+  shuffleDiscardIntoDeck,
+  makeChange
+} from './game-util';
 
 let idCounter = 0;
 
