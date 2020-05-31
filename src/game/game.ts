@@ -5,8 +5,8 @@ import { getCurrentPlayer, isMultiselectDecision, isDecision, isStateChange, com
 import { decision } from './decision';
 import { buyPhase } from './buyphase';
 import { logF } from './debug';
-import { ofType, uniqueCards, playActionCard, isReaction } from './card-util';
 import { getMatchingReactions, getReactionExecutionSteps } from './reaction';
+import { ofType, uniqueCards, getTemplate, playActionCard } from './cards';
 
 const moveToBuyPhase = (reason?: string): StateChange => {
   return {
@@ -66,7 +66,7 @@ const actionPhase = (state: State): Step => {
 
   const choices: MultiselectChoice[] = uniqueActionsInHand.map((card) => {
     return {
-      description: 'Play action: ' + card.name,
+      description: 'Play action: ' + getTemplate(card).name,
       execute: playActionCard(card)
     }
   })

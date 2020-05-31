@@ -1,17 +1,17 @@
 import {
-  Card,
   CardType,
   Decision,
   StateChangeMetaData,
   EnemyAttackMetaData,
   Step
 } from "../game-types"
-import { makeChange, pickCards } from "../card-util"
+import { makeChange } from "../game-util"
+import { CardFactory } from "../cards"
 
 const isEnemyAttack = (s: StateChangeMetaData): s is EnemyAttackMetaData =>
   s.type === 'enemy-attack'
 
-export const Moat: Card = {
+export const Moat: CardFactory = ({ pickCards }) => ({
   name: 'Moat',
   types: [CardType.ACTION, CardType.REACTION],
   price: 2,
@@ -54,4 +54,4 @@ export const Moat: Card = {
       }
     }
   }
-}
+})

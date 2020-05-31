@@ -32,9 +32,10 @@ export type StateChangeMetaData =
   | EnemyAttackMetaData
   | SCMetadataBase<'handled'>
 
+export type StateChangeF = (s: State, output: string[]) => [State, string[]]
 export type StateChange = BaseStep & {
   metaData?: StateChangeMetaData[]
-  stateChange: (s: State, output: string[]) => [State, string[]]
+  stateChange: StateChangeF
 }
 type BaseDecision<T> = BaseStep & {
   player: PlayerId
@@ -77,7 +78,7 @@ export type CardReactionProperties = {
   ) => Step
 }
 
-export type Card = {
+export type CardTemplate = {
   name: string
   description?: string
   types: CardType[]
@@ -89,6 +90,15 @@ export type Card = {
 
   execAction?: (state: State, log: string[]) => Step
   execBuyAction?: (state: State, log: string[]) => Step
+}
+
+export type Card = {
+  // card template
+  template: string
+
+  // physical id. this type refers to a "physical" card,
+  // so we can track the movements of an actual physical
+  pid: string
 }
 
 export type PlayerState = {
@@ -108,12 +118,8 @@ export type PhaseStateBase<T extends TurnPhase> = {
   // hand belongs to playerstate
 }
 
-// Might later extend this with additional info about made decisions
-// on the cards?
-export type PlayedCard = Card
-
 export type ActionPhaseState = PhaseStateBase<'action'> & {
-  played: PlayedCard[]
+  played: Card[]
   actions: number
   buys: number
   money: number
@@ -131,14 +137,14 @@ export type Discount = {
 }
 
 export type BuyPhaseState = PhaseStateBase<'buy'> & {
-  played: PlayedCard[]  // This is for cards played in the buy phase
+  played: Card[]  // This is for cards played in the buy phase
   buys: number
   startedPurchasing: boolean
   money: number
   purchases: Purchase[]
   discounts: Discount[]
   actionPhase: {
-    played: PlayedCard[]
+    played: Card[]
     // More info here later?
   }
 }
@@ -146,10 +152,14 @@ export type BuyPhaseState = PhaseStateBase<'buy'> & {
 export type TurnState = BuyPhaseState | ActionPhaseState
 
 export type StoreState = {
-  points: Card[][]
   actions: Card[][]
-  money: Card[][]
-  other?: Card[][]
+  estate: Card[]
+  duchy: Card[]
+  province: Card[]
+  copper: Card[]
+  silver: Card[]
+  gold: Card[]
+  curse: Card[]
 }
 export type State = {
   debug: boolean

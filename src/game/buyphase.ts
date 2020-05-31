@@ -1,11 +1,11 @@
 
 import * as R from 'ramda'
 import { State, Step, BuyPhaseState, Card, CardType, MultiselectDecision } from "./game-types";
-import { getCurrentPlayer, isBuyPhase } from "./game-util";
-import { addCardToDiscard, reduceBuys, reduceMoney, ofType, playMoneyCard, uniqueCards } from './card-util';
+import { getCurrentPlayer, isBuyPhase, reduceBuys, reduceMoney } from "./game-util";
 import { decision, mergeDecisions, endTurnDecision } from './decision';
 import { endTurn } from './turnend';
 import { pipe2 } from './util';
+import { getTemplate, addCardToDiscard, ofType, playMoneyCard, uniqueCards } from './cards';
 
 export const getCardPrice = (turn: BuyPhaseState, card: Card, state: State): number => {
   const { discounts } = turn
@@ -13,9 +13,10 @@ export const getCardPrice = (turn: BuyPhaseState, card: Card, state: State): num
     return discount.match(card, state)
   })
 
-  const originalCardPrice = typeof card.price === 'number'
-     ? card.price
-     : card.price(state)
+  const cardT = getTemplate(card)
+  const originalCardPrice = typeof cardT.price === 'number'
+     ? cardT.price
+     : cardT.price(state)
 
   return R.reduce(
     (price, { discount }) => {
@@ -35,7 +36,8 @@ const canAfford = (turn: BuyPhaseState, card: Card, state: State) => {
 export const shouldAutoStartPurchasing = (state: State) => {
   const hand = getCurrentPlayer(state).hand
   return hand.filter((card) => {
-    return card.execBuyAction || card.moneyValue !== undefined
+    const cardT = getTemplate(card)
+    return cardT.execBuyAction || cardT.moneyValue !== undefined
   }).length < 1
 }
 
@@ -69,7 +71,7 @@ const buyCard = (card: Card, price: number): Step => {
   return {
     stateChange: (state: State, log: string[]) => transform(
       state,
-      log.concat([`You bought the card ${card.name} for ${price} money.`])
+      log.concat([`You bought the card ${getTemplate(card).name} for ${price} money.`])
     )
   }
 }
@@ -79,7 +81,8 @@ const cardsToPurchaseDecision = (cards: Card[], state: State): MultiselectDecisi
   return decision(
     player.id,
     cards.map((card) => {
-      const { name } = card
+      const cardT = getTemplate(card)
+      const { name } = cardT
       const turn = state.turn as BuyPhaseState
       const price = getCardPrice(turn, card, state)
       const buyTransform = buyCard(card, price)
@@ -91,10 +94,13 @@ const cardsToPurchaseDecision = (cards: Card[], state: State): MultiselectDecisi
   )
 }
 
-const isComplexMoneyCard = (card: Card): boolean => (
-  typeof card.moneyValue === 'function' ||
-  !!card.execBuyAction
-)
+const isComplexMoneyCard = (card: Card): boolean => {
+  const cardT = getTemplate(card)
+  return (
+    typeof cardT.moneyValue === 'function' ||
+    !!cardT.execBuyAction
+  )
+}
 
 const canAutoplayMoneyCards = (state: State): boolean => {
   const currentPlayer = getCurrentPlayer(state)
@@ -115,7 +121,7 @@ const autoplayMoneyCards = (state: State, log: string[]): [State, string[]] => {
   const { hand } = currentPlayer
   const cardsToPlay = getMoneyCards(hand)
   const transforms = cardsToPlay.map(playMoneyCard)
-  const cardNames = cardsToPlay.map(card => card.name.toUpperCase()).join(', ')
+  const cardNames = cardsToPlay.map(card => getTemplate(card).name.toUpperCase()).join(', ')
   const [newState, newLog] = R.reduce(
     ([state, log], transform) => {
       return transform(state, log)
@@ -147,8 +153,8 @@ export const buyPhase = (state: State): Step => {
     return autoStartPurchasing()
   }
 
-  const canAffordCardFromStore = (pile: Card[]) => {
-    return canAfford(turn, pile[0], state)
+  const canAffordCardFromStore = (card: Card) => {
+    return canAfford(turn, card, state)
   }
 
   if (canAutoplayMoneyCards(state)) {
@@ -159,12 +165,16 @@ export const buyPhase = (state: State): Step => {
 
   const availableCardsToBuy = [
     ...store.actions,
-    ...store.points,
-    ...store.money,
-    ...(store.other || [])
+    store.estate,
+    store.duchy,
+    store.province,
+    store.copper,
+    store.silver,
+    store.gold,
+    store.curse,
   ]
-    .filter(canAffordCardFromStore)
     .map((pile: Card[]) => pile[0])
+    .filter(canAffordCardFromStore)
 
   if (availableCardsToBuy.length < 1) {
     return endTurn('You cannot afford to buy anything.')
@@ -176,7 +186,7 @@ export const buyPhase = (state: State): Step => {
     currentPlayer.id,
     uniqueMoneyCardsInHand.map((card: Card) => {
       return {
-        description: 'Play ' + card.name,
+        description: 'Play ' + getTemplate(card).name,
         execute: () => ({
           stateChange: playMoneyCard(card)
         })

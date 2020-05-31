@@ -1,6 +1,6 @@
-import { Card, CardType } from "../game-types";
+import { CardTemplate, CardType } from "../game-types";
 
-export const special: Card[] = [
+export const special: CardTemplate[] = [
   {
     name: 'Curse',
     types: [CardType.CURSE],

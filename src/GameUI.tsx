@@ -2,6 +2,7 @@ import React from 'react';
 import * as R from 'ramda'
 import { State, Decision, Card, CardType, PlayerState } from './game/game-types'
 import { isMultiselectDecision, getCurrentPlayer, isBuyPhase } from './game/game-util';
+import { getTemplate } from './game/cards';
 
 type UIDecisionProps = {
   state: State
@@ -85,14 +86,18 @@ const cardTypeToCss: { [T in CardType]: string} = {
   [CardType.SHELTER]: 'shelter'
 }
 
-const BoardCard: React.FC<{ card: Card, onClick?: (card: Card) => void }> = ({ card, onClick }) => (
-  <div className={css('card', ...(card.types.map((type) => cardTypeToCss[type])))}>
-    <h3>{card.name}</h3>
-  </div>
-)
+const BoardCard: React.FC<{ card: Card, onClick?: (card: Card) => void }> = ({ card, onClick }) => {
+  const cardT = getTemplate(card)
+  const types = cardT.types.map((type) => cardTypeToCss[type])
+  return (
+    <div className={css('card', ...types)}>
+      <h3>{cardT.name}</h3>
+    </div>
+  )
+}
 
 const cardsRow = (row: Card[]) => row.map((card, i) => (
-  <BoardCard key={card.name + i} card={card}/>
+  <BoardCard key={getTemplate(card).name + i} card={card}/>
 ))
 
 const pileRow = (pile: Card[][]) => cardsRow(pile.map((pile) => pile[0]))
@@ -142,7 +147,10 @@ const getPlayerColor = ({ id }: PlayerState) => {
 
 const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
   const player = getCurrentPlayer(state)
-  const upperRow = state.store.money.concat(state.store.points)
+  const { copper, silver, gold, estate, duchy, province } = state.store
+  const upperRow = [
+    copper, silver, gold, estate, duchy, province
+  ]
 
   const store = (
     <div className="store">

@@ -1,25 +1,36 @@
-import { findMultiple, take, findCard } from "./card-util";
-import { points, moneyCards, actions } from "./cards";
+import { times } from 'ramda'
+import { allCards, createCard, getTemplate, take } from "./cards";
 import { Card, State, PlayerState, PlayerId, TurnState, Step } from "./game-types";
 import { shuffle } from "./util";
 import { getCurrentPlayer } from "./game-util";
 import { getTurnNextStep } from "./game";
 
-const findPoints = findMultiple(points)
-const findMoney = findMultiple(moneyCards)
-const findEstate = findPoints('Estate')
-const findCopper = findMoney('Copper')
+const assert = (text: string, f: () => boolean) => {
+  if (!f()) {
+    throw new Error(text)
+  }
+}
+const assertCard = (name: string) => assert(
+  `Could not find card ${name}`,
+  () => !!allCards[name]
+)
+
+const getCards = (name: string, amount: number): Card[] => times(
+  () => createCard(name),
+  amount
+)
 
 function initialiseDeck(): Card[] {
+
   let initDeck = shuffle(
-    findEstate(3).concat(
-      findCopper(7)
+    getCards('Estate', 3).concat(
+      getCards('Copper', 7)
     )
   )
 
   // debug code here
-  // initDeck[0] = findCard('Witch', actions)
-  // initDeck[1] = findCard('Moat', actions)
+  initDeck[0] = createCard('Witch')
+  initDeck[1] = createCard('Moat')
   // initDeck[1] = findCard('Smithy', actions)
   // initDeck[7] = findCard('Smithy', actions)
 
@@ -30,7 +41,7 @@ export const getInitialStep = (state: State): [Step, string[]] => {
   const currentPlayer = getCurrentPlayer(state)
   const log = [
     'Starting game.', `It is ${currentPlayer.name}'s turn.`,
-    `Hand: ${currentPlayer.hand.map(c => c.name).join(', ')}`
+    `Hand: ${currentPlayer.hand.map(c => getTemplate(c).name).join(', ')}`
   ]
   const step = getTurnNextStep(state)
   return [step, log]
@@ -50,6 +61,15 @@ export function initialiseTurn(player: PlayerId): TurnState {
 const DEBUG_ON = true
 
 export function initialiseGame(...playerNames: string[]): State {
+
+  assertCard('Estate')
+  assertCard('Duchy')
+  assertCard('Province')
+  assertCard('Copper')
+  assertCard('Silver')
+  assertCard('Gold')
+  assertCard('Curse')
+
   const players = playerNames.map((playerName, i): PlayerState => {
     const fullDeck = initialiseDeck()
     const [hand, deck] = take(5, fullDeck)
@@ -68,20 +88,17 @@ export function initialiseGame(...playerNames: string[]): State {
     turn: initialiseTurn(0),
     players,
     store: {
-      points: [
-        findEstate(12),
-        findPoints('Duchy', 12),
-        findPoints('Province', 12),
-      ],
+      estate: getCards('Estate', 12),
+      duchy: getCards('Duchy', 12),
+      province: getCards('Province', 12),
       actions: [
-        findMultiple(actions, 'Village', 10),
-        findMultiple(actions, 'Smithy', 10),
+        getCards('Village', 10),
+        getCards('Smithy', 10),
       ],
-      money: [
-        findCopper(60),
-        findMoney('Silver', 40),
-        findMoney('Gold', 30),
-      ],
+      copper: getCards('Copper', 60),
+      silver: getCards('Silver', 40),
+      gold: getCards('Gold', 30),
+      curse: getCards('Curse', 40)
     }
   }
 }

@@ -1,9 +1,9 @@
 import { modifyCurrentPlayer } from "./modifiers";
 import { State, Step } from "./game-types";
 import { isBuyPhase, getCurrentPlayer } from "./game-util";
-import { pickCards, makePickUpMsg } from "./card-util";
 import { initialiseTurn } from "./game-init";
 import { pipe2 } from "./util";
+import { pickCards, makePickUpMsg, getTemplate } from "./cards";
 
 const cleanUpPlayerAtEndOfTurn = (state: State, log: string[]) => pipe2(
   modifyCurrentPlayer((player, log) => {
@@ -51,7 +51,7 @@ const changeCurrentPlayer = (reason: string) =>
         ),
         '----- TURN END -----',
         'It is ' + nextPlayer.name + '´s turn. Hand: '
-          + nextPlayer.hand.map((c => c.name)).join(', ')
+          + nextPlayer.hand.map((c => getTemplate(c).name)).join(', ')
       ])
     ]
   }

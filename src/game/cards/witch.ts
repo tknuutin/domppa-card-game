@@ -1,10 +1,9 @@
-import { Card, CardType, PlayerState, StateChange } from "../game-types"
-import { combineSteppers, getCurrentPlayer, combineSteps } from "../game-util"
-import { makeChange, pickCards, findCard } from "../card-util"
+import { CardTemplate, CardType, PlayerState, StateChange, StateChangeF } from "../game-types"
+import { combineSteppers, getCurrentPlayer, combineSteps, makeChange } from "../game-util"
 import { modifyPlayer } from "../modifiers"
-import { special } from "./special"
+import { CardFactory } from "../cards"
 
-export const Witch: Card = {
+export const Witch: CardFactory = ({ pickCards }) => ({
   name: 'Witch',
   types: [CardType.ACTION, CardType.ATTACK],
   price: 5,
@@ -12,17 +11,38 @@ export const Witch: Card = {
     makeChange(pickCards(2)),
     (state, log) => {
       const me = getCurrentPlayer(state)
-      const curse = findCard('Curse', special)
 
       const effectPerPlayer = (player: PlayerState): StateChange => {
         const modifyTarget = modifyPlayer((p) => p.id === player.id)
-        const giveCurseToTarget = modifyTarget((player, log) => [
-          {
-            ...player,
-            discard: player.discard.concat([curse])
-          },
-          log.concat([player.name + ' gains a curse.'])
-        ])
+        
+        const giveCurse: StateChangeF = (state, log) => {
+          const pile = state.store.curse
+          if (pile.length < 1) {
+            return [state, log.concat([
+              `The curse pile is empty so Witch has no effect on ${player.name}.`
+            ])]
+          }
+
+          const [curse, ...rest] = pile
+          const giveCurseToTarget = modifyTarget((player, log) => [
+            {
+              ...player,
+              discard: player.discard.concat([curse])
+            },
+            log.concat([player.name + ' gains a curse.'])
+          ])
+
+          return giveCurseToTarget(
+            {
+              ...state,
+              store: {
+                ...state.store,
+                curse: rest
+              }
+            },
+            log
+          )
+        }
 
         return {
           metaData: [{
@@ -31,7 +51,7 @@ export const Witch: Card = {
             attackingCard: 'Witch',
             target: player.id
           }],
-          stateChange: giveCurseToTarget
+          stateChange: giveCurse
         }
       }
 
@@ -42,4 +62,4 @@ export const Witch: Card = {
       return combineSteps(...allEffects)
     }
   )
-}
+})

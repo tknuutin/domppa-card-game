@@ -1,5 +1,5 @@
 import { State, PlayerId, Card, StateChangeMetaData, Step, StateChange } from "./game-types";
-import { isReaction } from "./card-util";
+import { isReaction, getTemplate } from "./cards";
 
 type Matches = {
   player: PlayerId
@@ -18,7 +18,8 @@ export const getMatchingReactions = (
       reactions: p.hand
         .filter(isReaction)
         .map((card): ReactionMatch | undefined => {
-          const { reaction } = card
+          const cardT = getTemplate(card)
+          const { reaction } = cardT
           if (!reaction) {
             return undefined
           }
@@ -37,7 +38,8 @@ export const getReactionExecutionSteps = (
 ): Step[] =>
   reactionsPerPlayer.reduce((acc: Step[], { reactions, player }) => {
     const steps = reactions.map(({ card, metadata }): Step => {
-      const { reaction } = card
+      const cardT = getTemplate(card)
+      const { reaction } = cardT
       if (!reaction) {
         return { stateChange: (s, log) => [s, log]}
       }
