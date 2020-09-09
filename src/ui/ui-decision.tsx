@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   isMultiselectDecision,
-} from '../game/game-util';
+} from '../game/selectors';
 import { State, Decision } from '../game/game-types';
 import { PlayerName } from './ui-playername';
 

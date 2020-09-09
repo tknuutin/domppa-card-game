@@ -6,14 +6,17 @@ import { DecisionPoint, iterateUntilDecision, executeChoice } from './game/game'
 import { isMultiselectDecision } from './game/game-util';
 import { GameUI } from './GameUI';
 import { initialiseGame, getInitialStep } from './game/game-init';
+import { State } from './game/game-types';
 
 type UIState = {
+  oldState: State | undefined
   decisionPoint: DecisionPoint | undefined
   oldLog: string[]
 }
 
 class App extends React.Component<{}, UIState> {
   state: UIState  = {
+    oldState: undefined,
     decisionPoint: undefined,
     oldLog: [],
   }
@@ -60,6 +63,9 @@ class App extends React.Component<{}, UIState> {
 
         const MAXLOG = 7
         return {
+          oldState: uiState.decisionPoint
+            ? uiState.decisionPoint.state
+            : undefined,
           decisionPoint: {
             decision,
             state,
@@ -92,6 +98,7 @@ class App extends React.Component<{}, UIState> {
       )
     }
 
+    const { oldState } = this.state
     const { state, log, decision } = dp
     const callbacks = {
       onChoice: this.onChoice
@@ -100,6 +107,7 @@ class App extends React.Component<{}, UIState> {
       <div className="App">
         <GameUI
           state={state}
+          oldState={oldState}
           decision={decision}
           oldLog={this.state.oldLog}
           log={log}

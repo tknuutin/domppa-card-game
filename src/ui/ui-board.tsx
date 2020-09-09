@@ -7,18 +7,27 @@ import {
 } from '../game/game-types'
 import {
   getCurrentPlayer,
-  isBuyPhase
-} from '../game/game-util';
-import { getTemplate } from '../game/cards';
+  isBuyPhase,
+  getTemplate
+} from '../game/selectors';
 import { getPlayerColor } from './player-color';
 import { PlayerName } from './ui-playername';
 import { BoardCard } from './ui-boardcard';
 
-const cardsRow = (row: Card[]) => row.map((card, i) => (
-  <BoardCard key={getTemplate(card).name + i} card={card}/>
-))
+const cardsRow = (row: Card[], location: string) => row.map((card, i) => {
+  const cardT = getTemplate(card)
+  return (
+    <BoardCard key={cardT.name + i} card={card} location={location}/>
+  )
+})
 
-const pileRow = (pile: Card[][]) => cardsRow(pile.map((pile) => pile[0]))
+const pileRow = (
+  pile: Card[][],
+  location: string
+) => cardsRow(
+  pile.map((pile) => pile[0]),
+  location
+)
 
 const getDeckCardsAmount = (player: PlayerState, state: State): string => {
   if (state.debug) {
@@ -51,6 +60,7 @@ const getCurrentTurnInfoText = (state: State): string => {
 }
 
 export const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
+
   const player = getCurrentPlayer(state)
   const { copper, silver, gold, estate, duchy, province } = state.store
   const upperRow = [
@@ -61,10 +71,10 @@ export const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
     <div className="store">
       <p>Store:</p>
       <div className="store-row store-money">
-        {pileRow(upperRow)}
+        {pileRow(upperRow, 'store')}
       </div>
       <div className="store-row store-actions">
-        {pileRow(state.store.actions)}
+        {pileRow(state.store.actions, 'store')}
       </div>
     </div>
   )
@@ -74,9 +84,9 @@ export const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
     <div className="played">
       <p>Played:</p>
       {isBuyPhase(turn) && (
-        cardsRow(turn.actionPhase.played) 
+        cardsRow(turn.actionPhase.played, 'played') 
       )}
-      {cardsRow(turn.played)}
+      {cardsRow(turn.played, 'played')}
     </div>
   )
 
@@ -95,7 +105,7 @@ export const GameBoard: React.FC<{ state: State }> = ({ state, children }) => {
           {hand.length > 0 ? (
             <>
               <p>Hand:</p>
-              {cardsRow(player.hand)}
+              {cardsRow(player.hand, 'hand')}
             </>
           ) : (
             <p>Hand is empty.</p>

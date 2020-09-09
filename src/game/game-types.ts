@@ -1,4 +1,3 @@
-import { Mod } from "./modifiers";
 
 export type PlayerId = number
 export enum CardType {
