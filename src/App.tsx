@@ -61,6 +61,8 @@ class App extends React.Component<{}, UIState> {
           (window as any).domppadebug = state
         }
 
+        console.log('NEW APP UI STATE', state.turn)
+
         const MAXLOG = 7
         return {
           oldState: uiState.decisionPoint

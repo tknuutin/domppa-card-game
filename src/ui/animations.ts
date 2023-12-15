@@ -2,16 +2,17 @@
 
 import { Card, State } from "../game/game-types"
 import { getCurrentPlayer, getPlayedCards } from "../game/selectors"
-import { AnimationContextType } from "./animation-context"
+import { AnimationContextController } from "./animation-context"
 
 
 export type CardPlayAnimation = {
   type: 'card-play',
   card: Card
+  duration: number
 }
 export type Animation =
   | CardPlayAnimation
-  | { type: 'none' }
+  | { type: 'none', duration: 0 }
 
 const matchCardPlayAnimation = (
   newState: State,
@@ -34,7 +35,8 @@ const matchCardPlayAnimation = (
 
   return cardsPlayed.map((card) => ({
     type: 'card-play',
-    card
+    card,
+    duration: 1000
   }))
 }
 
@@ -53,16 +55,32 @@ export type AnimationIdentifier = {
   metadata: any
 }
 
+const isCardPlayAnim = (animation: any): animation is CardPlayAnimation =>
+  animation.type === 'card-play'
+
+type AnimClasses = {
+  classes: string[]
+  styles: Object
+}
+
 export const getAnimClasses = (
-  context: AnimationContextType,
-  animId: AnimationIdentifier
-): string[] => {
+  context: AnimationContextController,
+  animId: AnimationIdentifier,
+  pos: DOMRect | ClientRect | null
+): AnimClasses => {
   if (animId.type.includes('card')) {
-    const matchingAnims = context.animations.filter(
-      ({ animation }) =>
-        animation.type === 'card-play' && animation.card.pid === animId.metadata
+    const matchingAnim = context.animations.find(
+      (animation): animation is CardPlayAnimation =>
+        isCardPlayAnim(animation) && animation.card.pid === animId.metadata
     )
+    if (!matchingAnim) {
+      return { classes: [], styles: {} }
+    }
+    if (animId.location.includes('hand')) {
+      return { classes: [matchingAnim.type, 'card-hand', 'moving'], styles: {} }
+    }
+    return { classes: [matchingAnim.type, 'card-played'], styles: {} }
   }
-  return []
+  return { classes: [], styles: {} }
 }
 
